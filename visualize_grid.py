@@ -1,6 +1,7 @@
 from grid import load_grid
 from search_algorithms import * 
 from node import Node
+from utils import manhattan_distance
 
 def visualize_path(filename):
     n, m, start, goals, walls = load_grid(filename)
@@ -18,12 +19,14 @@ def visualize_path(filename):
 
     # Chạy BFS (hoặc thuật toán khác)
     node, nodes_created = greedy_best_first_search(start, goals, walls, n, m)
+    # node, nodes_created = a_star(start, goals, walls, n, m)
 
     if node:
         path_coords = [n.state for n in node.path()]
         for x, y in path_coords:
             if grid[y][x] == '.':
-                grid[y][x] = '*'
+                d = min(manhattan_distance((x,y), goal) for goal in goals)
+                grid[y][x] = str(d)
 
     # Đặt start
     sx, sy = start
@@ -41,4 +44,4 @@ def visualize_path(filename):
         print(' '.join(row))
 
 if __name__ == "__main__":
-    visualize_path("test_cases/RobotNav-test.txt")
+    visualize_path("test_cases/new.txt")

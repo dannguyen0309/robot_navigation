@@ -15,6 +15,8 @@ if __name__ == "__main__":
         node, nodes_created = greedy_best_first_search(start, goals, walls, n, m)
     elif method == "AS" or method == "as":
         node, nodes_created = a_star(start, goals, walls, n, m)
+    elif method == "FS" or method == "fs":
+        node, nodes_created = fringe_search(start, goals, walls, n, m)
     else:
         print("Unknown method:", method)
         exit()

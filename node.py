@@ -18,7 +18,7 @@ class Node:
         actions =[]
         node = self
         while node.parent is not None:
-            actions.append(node.action.lower())
+            actions.append(node.action)
             node = node.parent
         return list(reversed(actions))
 
