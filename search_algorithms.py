@@ -123,26 +123,31 @@ def a_star (start, goals, walls, n, m):
 
 
 
+
+
+# ----------------------- CUSTOM 2 - UNINFORMED SEARCH - FRINGE SEARCH ---------------------
 def fringe_search(start, goals, walls, n, m):
     start_h = min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, path_cost=0, heuristic=start_h)
 
     # Initialize
-    now = [start_node]
+    current = [start_node]
     later = []
     threshold = start_node.path_cost + start_node.heuristic
     nodes_created = 1
     cost_so_far = {start: 0}
+    explored_states_list = []
 
-    while now:
+    explored_states_list.append(start_node)
+    while current:
         min_f_exceeding_threshold = float('inf')
 
-        for node in now:
+        for node in current:
             if node.state in goals:
                 return node, nodes_created
 
             for action, next_node in expand(node.state, walls, n, m):
-                step_cost = 1  # Nếu muốn, có thể thay đổi step_cost
+                step_cost = 1  
                 new_cost = node.path_cost + step_cost
                 h = min(manhattan_distance(next_node, goal) for goal in goals)
                 f = new_cost + h
@@ -166,7 +171,7 @@ def fringe_search(start, goals, walls, n, m):
             return None, nodes_created
 
         threshold = min_f_exceeding_threshold
-        now = later
+        current = later
         later = []
 
     return None, nodes_created
