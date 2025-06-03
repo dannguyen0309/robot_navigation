@@ -122,10 +122,116 @@ def a_star (start, goals, walls, n, m):
     return None, nodes_explored
 
 
+# ----------------------- CUSTOM 1 - UNINFORMED SEARCH - Bi-directional
+def bi_directional(start, goals, walls, n, m):
+    fwd_queue = deque([Node(start)])
+    bwd_queue = deque()
 
+    fwd_explored = {start}
+    bwd_explored = set()
 
+    fwd_nodes = {start: fwd_queue[0]}
+    bwd_nodes = {}
 
-# ----------------------- CUSTOM 2 - UNINFORMED SEARCH - FRINGE SEARCH ---------------------
+    for goal in goals:
+        goal_node = Node(goal)
+
+        bwd_queue.append(goal_node)
+        bwd_explored.add(goal)
+        bwd_nodes[goal] = goal_node
+    
+    nodes_created = 1 + len(goals)
+    while fwd_queue and bwd_queue:
+        # Forward search step
+        current_node_fwd = fwd_queue.popleft()
+
+        if current_node_fwd.state in bwd_explored:
+            meeting_node_fwd = current_node_fwd
+            meeting_node_bwd = bwd_nodes[current_node_fwd.state]
+            return _stitch_paths(meeting_node_fwd, meeting_node_bwd), nodes_created
+        
+        for action, next_node in expand(current_node_fwd.state, walls, n, m):
+
+            if next_node not in fwd_explored:
+                child_node_fwd = Node(next_node,
+                                    parent=current_node_fwd,
+                                    action=action,
+                                    path_cost=current_node_fwd.path_cost + 1)
+                fwd_queue.append(child_node_fwd)
+                fwd_explored.add(next_node)
+                fwd_nodes[next_node] = child_node_fwd
+                nodes_created += 1
+
+                if next_node in bwd_explored:
+                    meeting_node_fwd = child_node_fwd
+                    meeting_node_bwd = bwd_nodes[next_node]
+                    return _stitch_paths(meeting_node_fwd, meeting_node_bwd), nodes_created
+
+        # Backward search step
+        current_node_bwd = bwd_queue.popleft()
+
+        if current_node_bwd.state in fwd_explored:
+            meeting_node_fwd = fwd_nodes[current_node_bwd.state]
+            meeting_node_bwd = current_node_bwd
+            return _stitch_paths(meeting_node_fwd, meeting_node_bwd), nodes_created
+        
+        for action, next_node in expand(current_node_bwd.state, walls, n, m):
+            if next_node not in bwd_explored:
+                child_node_bwd = Node(next_node,
+                                    parent=current_node_bwd,
+                                    action=action,
+                                    path_cost=current_node_bwd.path_cost + 1)
+                bwd_queue.append(child_node_bwd)
+                bwd_explored.add(next_node)
+                bwd_nodes[next_node] = child_node_bwd
+                nodes_created += 1
+
+                if next_node in fwd_explored:
+                    meeting_node_fwd = fwd_nodes[next_node]
+                    meeting_node_bwd = child_node_bwd
+                    return _stitch_paths(meeting_node_fwd, meeting_node_bwd), nodes_created
+
+    return None, nodes_created
+
+def _stitch_paths(fwd_meet_node, bwd_meet_node):
+    REVERSE_ACTIONS_MAP = {'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left'}
+
+    # Step 1: Initialize
+    current_stitched_node = fwd_meet_node
+
+    # Step 2: Reconstruct path from goal (backward search) up to the meeting node
+    path_from_bwd_goal_to_meet_nodes = []
+    current_bwd_path_node = bwd_meet_node
+
+    while current_bwd_path_node is not None:
+        path_from_bwd_goal_to_meet_nodes.insert(0, current_bwd_path_node)  # Insert at head
+        current_bwd_path_node = current_bwd_path_node.parent
+
+    # Step 3: Stitch the backward path into the forward path
+    # Skip the meeting node itself (index -1), start from parent of bwd_meet_node
+    for i in range(len(path_from_bwd_goal_to_meet_nodes) - 2, -1, -1):
+        node_to_get_state_from = path_from_bwd_goal_to_meet_nodes[i]
+        child_node_in_bwd_path_segment = path_from_bwd_goal_to_meet_nodes[i + 1]
+
+        # Action in the backward search that reached the child
+        action_in_bwd_tree = child_node_in_bwd_path_segment.action
+        # Reverse the action to align with the overall path direction
+        action_for_stitched_path = REVERSE_ACTIONS_MAP[action_in_bwd_tree]
+
+        new_path_cost = current_stitched_node.path_cost + 1  # assuming step cost of 1
+
+        new_stitched_node = Node(
+            state=node_to_get_state_from.state,
+            parent=current_stitched_node,
+            action=action_for_stitched_path,
+            path_cost=new_path_cost
+        )
+
+        current_stitched_node = new_stitched_node
+
+    # Step 4: Return the final stitched node
+    return current_stitched_node
+# ----------------------- CUSTOM 2 - INFORMED SEARCH - FRINGE SEARCH ---------------------
 def fringe_search(start, goals, walls, n, m):
     start_h = min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, path_cost=0, heuristic=start_h)

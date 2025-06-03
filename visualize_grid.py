@@ -1,5 +1,5 @@
 from grid import load_grid
-from search_algorithms import * 
+from robot_navigation.algorithms import * 
 from node import Node
 from utils import manhattan_distance
 
@@ -18,7 +18,7 @@ def visualize_path(filename):
                     grid[y][x] = '#'
 
     # Chạy BFS (hoặc thuật toán khác)
-    node, nodes_created, explored_states_list = fringe_search(start, goals, walls, n, m)
+    node, nodes_created = fringe_search(start, goals, walls, n, m)
     # node, nodes_created = a_star(start, goals, walls, n, m)
 
     if node:
