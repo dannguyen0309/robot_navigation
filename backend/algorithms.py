@@ -1,7 +1,7 @@
 from collections import deque
 from node import Node
 from grid import is_valid
-from utils import PriorityQueue, manhattan_distance, euclidean_distance
+from utils import PriorityQueue, manhattan_distance
 
 def expand(state, walls, n, m):
     x, y = state

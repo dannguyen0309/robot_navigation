@@ -1,0 +1,88 @@
+from enum import IntEnum
+from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+
+app = FastAPI()
+
+class Priority(IntEnum):
+    LOW = 3
+    MEDIUM = 2 
+    HIGH = 1
+
+class TodoBase (BaseModel):
+    todo_name: str = Field(..., min_length=3, max_length=512, description = 'Name of todo')
+    todo_description: str = Field(..., description='Description of todo')
+    priority: Priority = Field(default=Priority.LOW, description = 'Priority of the todo')
+
+class TodoCreate(TodoBase):
+    pass
+
+class Todo(TodoBase):
+    todo_id: int = Field(...,description = 'ID of todo')
+
+class TodoUpdate (BaseModel):
+    todo_name: Optional[str] = Field(None, min_length=3, max_length=512, description='Name of todo')
+    todo_description: Optional[str] = Field(None, description='Description of todo')
+    priority: Optional[Priority] = Field(None, description='Priority of the todo')
+
+
+all_todos = [   
+    Todo(todo_id = 1, todo_name= "Clean House", todo_description= "Cleaning the house thoroughly", priority=Priority.HIGH),
+    Todo(todo_id = 2, todo_name= "Sport", todo_description= "Play soccer", priority=Priority.MEDIUM),
+    Todo(todo_id = 3, todo_name= "Work", todo_description= "Complete project documentation", priority=Priority.LOW),
+    Todo(todo_id = 4, todo_name= "Read", todo_description= "CLeaning the house thoroughly", priority=Priority.MEDIUM),
+    Todo(todo_id = 5, todo_name= "Mediate", todo_description= "Meditate 10 minutes", priority=Priority.LOW)            
+]
+
+
+# Path PARAMETERS
+@app.get("/todos/{todo_id}", response_model=Todo)
+def get_todo (todo_id: int):
+    for todo in all_todos:
+        if todo.todo_id == todo_id:
+            return todo
+    raise HTTPException(status_code=404, detail = 'Todo not found')
+
+# Query Parameters
+@app.get("/todos", response_model=List[Todo])
+def get_todos(first_n: int = None):
+    if first_n:
+        return all_todos[:first_n]
+    return all_todos
+
+
+@app.post("/todos", response_model=Todo)
+def creat_todo(todo: TodoCreate):
+    new_todo_id = max(todo.todo_id for todo in all_todos) + 1
+
+    new_todo = Todo(todo_id= new_todo_id,
+                    todo_name = todo.todo_name,
+                    todo_description=todo.todo_description,
+                    priority=todo.priority)
+
+    all_todos.append(new_todo)
+
+    return new_todo
+
+@app.put("/todos/{todo_id}", response_model=Todo)
+def update_todo(todo_id: int, updated_todo: TodoUpdate):
+    for todo in all_todos:
+        if todo.todo_id == todo_id:
+            if updated_todo.todo_name is not None:
+                todo.todo_name = updated_todo.todo_name
+            if updated_todo.todo_description is not None:
+                todo.todo_description = updated_todo.todo_description
+            if updated_todo.priority is not None:
+                todo.priority= updated_todo.priority    
+            return todo
+    raise HTTPException(status_code=404, detail = 'Todo not found')
+
+@app.delete('/todos/{todo_id}', response_model=Todo)
+def delete_todo(todo_id: int):
+    for index, todo in enumerate(all_todos):
+        if todo.todo_id == todo_id:
+            delete_todo = all_todos.pop(index)
+            return todo
+    raise HTTPException(status_code=404, detail = 'Todo not found')

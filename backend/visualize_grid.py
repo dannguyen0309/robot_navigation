@@ -1,7 +1,7 @@
-from grid import load_grid
-from robot_navigation.algorithms import * 
-from node import Node
-from utils import manhattan_distance
+from robot_navigation.backend.grid import load_grid
+from robot_navigation.backend.algorithms import * 
+from robot_navigation.backend.node import Node
+from robot_navigation.backend.utils import manhattan_distance
 
 def visualize_path(filename):
     n, m, start, goals, walls = load_grid(filename)
