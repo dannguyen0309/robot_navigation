@@ -53,13 +53,18 @@ export function Tile({
       onMouseEnter={() => onMouseEnter(row, col)}
       className={twMerge(
         style,
-        "relative flex items-center justify-center w-7 h-7 transition-colors min-w-0 min-h-0",
+        // Extra small for iPhone/mobile, scale up for larger screens
+        "relative flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-8 lg:h-8 transition-colors min-w-0 min-h-0",
         row === MAX_ROWS - 1 && "border-b",
         col === 0 && "border-l"
       )}
     >
-      {isStart && <MapPinIcon className="w-6 h-6 text-white" />}
-      {isEnd && <FlagIcon className="w-6 h-6 text-white" />}
+      {isStart && (
+        <MapPinIcon className="w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-6 lg:h-6 text-white" />
+      )}
+      {isEnd && (
+        <FlagIcon className="w-2 h-2 sm:w-3 sm:h-3 md:w-4 md:h-4 lg:w-6 lg:h-6 text-white" />
+      )}
     </div>
   );
 }

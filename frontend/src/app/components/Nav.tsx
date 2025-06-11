@@ -63,6 +63,8 @@ export function Nav({
   const [segmentPathLength, setSegmentPathLength] = useState<number[]>([]);
   const [allVisited, setAllVisitedLocal] = useState<[number, number][][]>([]);
   const [allPaths, setAllPathsLocal] = useState<[number, number][][]>([]);
+  // Add state to persist all goal positions
+  const [goalPositions, setGoalPositions] = useState<[number, number][]>([]);
 
   // --------------- HANDLE BUTTON ----------------------------------
   // 1) Clear
@@ -79,6 +81,8 @@ export function Nav({
     setNodesCreated(0);
     setPathLength(0);
     setTool("ADD_WALL");
+    setRanking([]); // Reset Ranking Board
+    setGoalPositions([]); // Reset goal positions
   };
 
   // 2) Maze carving
@@ -114,7 +118,23 @@ export function Nav({
   // 3) Solve / visualize
   const handlerRunVisualizer = async () => {
     if (isGraphVisualized) {
-      setGrid((g) => resetSearchData(g));
+      // Reset to initial grid with all original goals
+      setGrid((g) => {
+        let updated = g.map((row) =>
+          row.map((tile) => ({
+            ...tile,
+            isTraversed: false,
+            isPath: false,
+          }))
+        );
+        // Restore all goals as .isEnd = true
+        goalPositions.forEach(([col, row]) => {
+          if (updated[row] && updated[row][col]) {
+            updated[row][col].isEnd = true;
+          }
+        });
+        return updated;
+      });
       setIsGraphVisualized(false);
       return;
     }
@@ -126,13 +146,13 @@ export function Nav({
     const header = `[${n},${m}]`;
     const startLine = `(${startTile.col},${startTile.row})`;
 
-    // 2) Collect **all** goals from the grid state
+    // 2) Collect **all** goals from the grid state (ensure all .isEnd are included)
     const goalTiles = grid
       .flat()
       .filter((t) => t.isEnd)
-      .map((t) => `(${t.col},${t.row})`);
-    // Join them with '|' just like your parser expects
-    const goalsLine = goalTiles.join("|");
+      .map((t) => [t.col, t.row] as [number, number]);
+    setGoalPositions(goalTiles); // Persist all goal positions
+    const goalsLine = goalTiles.map(([col, row]) => `(${col},${row})`).join("|");
 
     // 3) Walls
     const wallLines: string[] = [];
@@ -153,6 +173,15 @@ export function Nav({
       BIDIRECTIONAL: "bd",
       FRINGE_SEARCH: "fs",
     };
+
+    // Reset all per-segment state and currentPathIndex before running
+    setAllVisitedLocal([]);
+    setAllPathsLocal([]);
+    setAllVisited([]);
+    setAllPaths([]);
+    setSegmentNodesCreated([]);
+    setSegmentPathLength([]);
+    setCurrentPathIndex(0);
 
     const res = await fetch("http://localhost:8000/solve", {
       method: "POST",
@@ -191,6 +220,7 @@ export function Nav({
       }))
     );
     newGrid[respStart[1]][respStart[0]].isStart = true;
+    // Mark all returned goals as .isEnd = true
     respGoals.forEach(([gx, gy]) => (newGrid[gy][gx].isEnd = true));
     respWalls.forEach(([wx, wy, w, h]) => {
       for (let dy = 0; dy < h; dy++)
@@ -208,7 +238,6 @@ export function Nav({
     setCurrentPathIndex(0);
 
     // Compute per-segment stats
-    // If backend returns arrays,
     const perSegmentNodes = Array.isArray(nodes_created)
       ? nodes_created
       : sanitizedVisited.map((seg) => seg.length);
@@ -317,6 +346,7 @@ export function Nav({
     setIsDisabled(true);
     setMaze("NONE");
     setUploadedText(null);
+    setRanking([]); // Reset Ranking Board
 
     // FETCH RANDOM GRID TEXT FROM BACKEND
     const res = await fetch("http://localhost:8000/randomize", {
@@ -456,45 +486,66 @@ export function Nav({
   useEffect(() => {
     // Only update if graph is visualized and we have data
     if (!isGraphVisualized) return;
-    // allVisited and allPaths should be available from props or context
-    // If not, you may need to pass them as props from the parent
     if (!allVisited || !allPaths) return;
     if (!allVisited[currentPathIndex] || !allPaths[currentPathIndex]) return;
 
-    setGrid((g) =>
-      g.map((row) =>
+    // Only reset isPath and isTraversed, do not touch isEnd
+    setGrid((g) => {
+      // First, clear isPath and isTraversed
+      let updated = g.map((row) =>
         row.map((tile) => ({
           ...tile,
           isTraversed: false,
           isPath: false,
         }))
-      )
-    );
+      );
+      // Restore all goals as .isEnd = true
+      goalPositions.forEach(([col, row]) => {
+        if (updated[row] && updated[row][col]) {
+          updated[row][col].isEnd = true;
+        }
+      });
+      return updated;
+    });
 
     // Mark visited cells for this segment
-    setGrid((g) =>
-      g.map((row, rIdx) =>
+    setGrid((g) => {
+      let updated = g.map((row, rIdx) =>
         row.map((tile, cIdx) => {
           const isVisited = allVisited[currentPathIndex].some(
             ([col, row]) => row === rIdx && col === cIdx
           );
           return isVisited ? { ...tile, isTraversed: true } : tile;
         })
-      )
-    );
+      );
+      // Restore all goals as .isEnd = true
+      goalPositions.forEach(([col, row]) => {
+        if (updated[row] && updated[row][col]) {
+          updated[row][col].isEnd = true;
+        }
+      });
+      return updated;
+    });
 
     // Mark path cells for this segment
-    setGrid((g) =>
-      g.map((row, rIdx) =>
+    setGrid((g) => {
+      let updated = g.map((row, rIdx) =>
         row.map((tile, cIdx) => {
           const isPath = allPaths[currentPathIndex].some(
             ([col, row]) => row === rIdx && col === cIdx
           );
           return isPath ? { ...tile, isPath: true } : tile;
         })
-      )
-    );
-  }, [currentPathIndex, isGraphVisualized, allVisited, allPaths, setGrid]);
+      );
+      // Restore all goals as .isEnd = true
+      goalPositions.forEach(([col, row]) => {
+        if (updated[row] && updated[row][col]) {
+          updated[row][col].isEnd = true;
+        }
+      });
+      return updated;
+    });
+  }, [currentPathIndex, isGraphVisualized, allVisited, allPaths, setGrid, goalPositions]);
 
   // Add effect to update nodesCreated and pathLength when currentPathIndex changes, using the per-segment stats arrays. This ensures the correct stats are shown for each page.
   useEffect(() => {

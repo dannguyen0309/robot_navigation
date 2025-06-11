@@ -2,11 +2,11 @@ import { RankingEntry } from "../utils/types";
 
 export function RankingBoard({ ranking }: { ranking: RankingEntry[] }) {
   return (
-    <div className="p-4 border border-slate-700 rounded-xl shadow-lg w-80 bg-gradient-to-br from-slate-900 to-slate-700 text-white">
-      <h2 className="text-xl font-bold mb-4 text-center tracking-wide">
+    <div className="p-2 sm:p-4 border border-slate-700 rounded-xl shadow-lg w-full sm:w-96 md:w-80 bg-gradient-to-br from-slate-900 to-slate-700 text-white mx-auto">
+      <h2 className="text-lg sm:text-xl font-bold mb-2 sm:mb-4 text-center tracking-wide">
         🏆 Ranking Board
       </h2>
-      <table className="w-full text-sm border-separate border-spacing-y-1">
+      <table className="w-full text-xs sm:text-sm border-separate border-spacing-y-1">
         <thead>
           <tr className="bg-slate-800">
             <th className="rounded-tl-lg px-2 py-1">#</th>

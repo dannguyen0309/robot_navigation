@@ -22,6 +22,16 @@ export default function Page() {
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
   const [showSettings, setShowSettings] = useState(false);
+  const [isWide, setIsWide] = useState(true);
+
+  useEffect(() => {
+    const checkWidth = () => {
+      setIsWide(window.innerWidth >= 1500);
+    };
+    checkWidth();
+    window.addEventListener("resize", checkWidth);
+    return () => window.removeEventListener("resize", checkWidth);
+  }, []);
 
   useEffect(() => {
     if (!gridContainerRef.current) return;
@@ -40,47 +50,62 @@ export default function Page() {
         <SpeedProvider>
           <div className="h-screen w-full flex flex-col bg-gradient-to-br from-slate-950 to-slate-800">
             <div className="flex-1 flex flex-col lg:flex-row relative">
-              {/* Menu button for small/medium devices */}
-              <button
-                className="md:hidden fixed top-4 left-4 z-30 bg-slate-800 text-white rounded-full p-2 shadow-lg focus:outline-none"
-                onClick={() => setShowSettings(true)}
-                aria-label="Open settings menu"
-              >
-                <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-                  <path
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
+              {/* Menu button for <1500px devices */}
+              {!isWide && (
+                <button
+                  className="fixed top-4 left-4 z-30 bg-slate-800 text-white rounded-full p-2 shadow-lg focus:outline-none"
+                  onClick={() => setShowSettings(true)}
+                  aria-label="Open settings menu"
+                >
+                  <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+                    <path
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                </button>
+              )}
               {/* Settings pane */}
               <aside
-                className={`w-full md:w-64 lg:w-80 flex flex-col gap-2 sm:gap-4 border-r border-slate-800 bg-slate-900/80 p-2 sm:p-4 overflow-auto rounded-b-xl lg:rounded-b-none lg:rounded-r-xl shadow-md lg:shadow-none mt-0 lg:mt-0 mb-2 lg:mb-0 z-20 transition-transform duration-300 md:static fixed top-0 left-0 h-full ${
-                  showSettings ? "translate-x-0" : "-translate-x-full"
-                } md:translate-x-0`}
+                className={`
+                  w-full md:w-64 lg:w-80 flex flex-col gap-2 sm:gap-4 border-r border-slate-800 bg-slate-900/80 p-2 sm:p-4 overflow-auto rounded-b-xl lg:rounded-b-none lg:rounded-r-xl shadow-md lg:shadow-none mt-0 lg:mt-0 mb-2 lg:mb-0 z-20 transition-transform duration-300
+                  ${isWide ? "static" : "fixed top-0 left-0 h-full"}
+                  ${
+                    isWide || showSettings
+                      ? "translate-x-0 pointer-events-auto"
+                      : "-translate-x-full w-0 pointer-events-none"
+                  }
+                `}
                 style={{ maxWidth: 320 }}
               >
                 {/* Close button for mobile */}
-                <div className="flex justify-end md:hidden mb-2">
-                  <button
-                    className="text-white bg-slate-700 rounded-full p-1"
-                    onClick={() => setShowSettings(false)}
-                    aria-label="Close settings menu"
-                  >
-                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-                      <path
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                {!isWide && (
+                  <div className="flex justify-end mb-2">
+                    <button
+                      className="text-white bg-slate-700 rounded-full p-1"
+                      onClick={() => setShowSettings(false)}
+                      aria-label="Close settings menu"
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-col gap-2 sm:gap-4 w-full">
                   <Nav
                     tool={tool}
@@ -96,15 +121,25 @@ export default function Page() {
               </aside>
               {/* Main content: Grid and Ranking Board */}
               <main className="flex-1 flex flex-col items-center justify-center overflow-auto p-2 sm:p-6">
-                <div className="w-full max-w-5xl flex flex-row items-start gap-4">
+                <div className="w-full max-w-5xl flex flex-col xl:flex-row items-start gap-4">
+                  {/* Ranking Board above grid on <1250px, right on >=1250px */}
+                  <div className="w-full xl:max-w-xs xl:w-64 xl:pb-15 sm:p-15 xl:order-2 order-1 lg:ml-20">
+                    <RankingBoard ranking={ranking} />
+                  </div>
                   {/* Grid section */}
-                  <div className="flex-1 flex flex-col items-center min-w-0 order-1">
+                  <div className="flex-1 flex flex-col items-center min-w-0 xl:order-1 order-2">
                     <div
                       ref={gridContainerRef}
-                      className="w-full h-full max-h-[80vh] aspect-square flex items-center justify-center bg-transparent"
+                      className="w-full h-full max-h-[60vh] sm:max-h-[70vh] md:max-h-[75vh] lg:max-h-[80vh] aspect-square flex items-center justify-center bg-transparent"
                       style={{
-                        maxWidth: "calc(100vw - 400px)",
-                        maxHeight: "80vh",
+                        maxWidth: isWide ? "calc(100vw - 400px)" : "100vw",
+                        maxHeight: isWide
+                          ? "80vh"
+                          : window.innerWidth < 640
+                          ? "60vh"
+                          : window.innerWidth < 768
+                          ? "70vh"
+                          : "75vh",
                       }}
                     >
                       <Grid
@@ -132,10 +167,6 @@ export default function Page() {
                         />
                       </div>
                     )}
-                  </div>
-                  {/* Ranking Board always on the right */}
-                  <div className="max-w-xs w-full md:w-64 md:pb-15 sm:p-15 lg:w-80 order-2 lg:pl-18">
-                    <RankingBoard ranking={ranking} />
                   </div>
                 </div>
               </main>

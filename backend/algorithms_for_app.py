@@ -111,9 +111,7 @@ def greedy_best_first_search_trace(
     n: int,
     m: int,
 ) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int]:
-    """
-    Tái sử dụng logic gbfs, nhưng thêm visited_steps và reconstruct path.
-    """
+
     visited_steps: List[Tuple[int,int]] = []
     path_steps: List[Tuple[int,int]] = []
     nodes_created = 1
@@ -172,7 +170,7 @@ def a_star_trace(
     start_h =  min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, heuristic=start_h)
 
-    # frontier dùng PriorityQueue (order='min', f = g + h)
+    # frontier dùng PriorityQueue (order='min', f=lambda node: node.path_cost + node.heuristic)
     frontier = PriorityQueue(order='min', f=lambda node: node.path_cost + node.heuristic)
     frontier.append(start_node)
 
@@ -291,38 +289,16 @@ def bi_directional_trace(
     if not found_fwd:
         return visited_steps, [], nodes_created
 
-    #start → meeting → goal bằng _stitch_paths
-    stitched_meet = _stitch_paths(found_fwd, found_bwd)
-    # Get every path from start → goal
-    path_nodes = stitched_meet.path()
+    # Correct path stitching: concatenate forward and reversed backward path (excluding meeting node)
+    fwd_path = found_fwd.path()  # from start to meeting
+    bwd_path = found_bwd.path()  # from goal to meeting
+    bwd_path = bwd_path[::-1]    # reverse to go from meeting to goal
+    # Remove the meeting node from bwd_path to avoid duplication
+    if bwd_path and fwd_path and bwd_path[0].state == fwd_path[-1].state:
+        bwd_path = bwd_path[1:]
+    path_nodes = fwd_path + bwd_path
     path_steps = [nd.state for nd in path_nodes]
-
     return visited_steps, path_steps, nodes_created
-
-
-def _stitch_paths(fwd_meet_node: Node, bwd_meet_node: Node) -> Node:
-    REVERSE_ACTION = {'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left'}
-
-    path_bwd: List[Node] = []
-    node_iter = bwd_meet_node
-    while node_iter is not None:
-        path_bwd.insert(0, node_iter)
-        node_iter = node_iter.parent
-
-    current = fwd_meet_node
-    for i in range(len(path_bwd) - 2, -1, -1):
-        child_bwd = path_bwd[i]
-        if child_bwd.action is None:
-            continue
-        reversed_action = REVERSE_ACTION[child_bwd.action]
-        new_cost = current.path_cost + 1
-        new_node = Node(child_bwd.state,
-                        parent=current,
-                        action=reversed_action,
-                        path_cost=new_cost)
-        current = new_node
-
-    return current
 
 
 # ---------------- CUSTOM 1 - INFORMED SEARCH - Fringe Search (trace) ----------------
