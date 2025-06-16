@@ -186,7 +186,7 @@ export function Nav({
     setSegmentPathLength([]);
     setCurrentPathIndex(0);
 
-    const res = await fetch("http://localhost:8000/api/solve", {
+    const res = await fetch("/api/solve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text, algorithm: algoMap[algorithm] }),
@@ -298,7 +298,7 @@ export function Nav({
     setUploadedText(txt);
     setMaze("NONE");
 
-    const res = await fetch("http://localhost:8000/api/parse", {
+    const res = await fetch("/api/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text: txt }),
@@ -359,7 +359,7 @@ export function Nav({
     setRanking([]); // Reset Ranking Board
 
     // FETCH RANDOM GRID TEXT FROM BACKEND
-    const res = await fetch("http://localhost:8000/api/randomize", {
+    const res = await fetch("/api/randomize", {
       method: "POST",
     });
     if (!res.ok) {
@@ -370,7 +370,7 @@ export function Nav({
     const { grid_text } = await res.json();
 
     // PARSE GRID
-    const parseRes = await fetch("http://localhost:8000/api/parse", {
+    const parseRes = await fetch("/api/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text }),
