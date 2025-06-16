@@ -123,7 +123,7 @@ export default function Page() {
               <main className="flex-1 flex flex-col items-center justify-center overflow-auto p-2 sm:p-6">
                 <div className="w-full max-w-5xl flex flex-col xl:flex-row items-center xl:items-start gap-4">
                   {/* Ranking Board above grid on small devices, right on >=1250px */}
-                  <div className="w-full max-w-xs xl:max-w-xs xl:w-64 xl:pb-15 sm:p-15 order-1 xl:order-2 flex-shrink-0">
+                  <div className="w-full max-w-xs xl:max-w-xs xl:w-64 xl:pb-15 sm:p-15 order-1 xl:order-2 flex-shrink-0 xl:ml-20">
                     <RankingBoard ranking={ranking} />
                   </div>
                   {/* Grid section */}
