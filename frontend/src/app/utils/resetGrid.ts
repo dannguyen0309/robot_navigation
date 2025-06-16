@@ -1,6 +1,5 @@
-// src/app/utils/resetGrid.ts
 import { START_TILE_CONFIGURATION, END_TILE_CONFIGURATION } from "./constants";
-import { TileType, GridType } from "./types";
+import { GridType } from "./types";
 
 // Clears *everything* (walls, paths, traversals, parents)
 // but leaves start/end tiles in place.

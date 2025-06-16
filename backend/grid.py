@@ -34,3 +34,8 @@ def is_valid (x, y, walls, n, m):
         if wx <= x < wx + w and wy <= y < wy + h:
             return False
     return True 
+def is_wall(x, y, walls):
+    for wx, wy, ww, wh in walls:
+        if wx <= x < wx + ww and wy <= y < wy + wh:
+            return True
+    return False

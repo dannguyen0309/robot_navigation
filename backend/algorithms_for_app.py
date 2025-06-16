@@ -1,24 +1,8 @@
 from collections import deque
 from typing import List, Tuple, Dict
+from algorithms import expand
 from node import Node
-from grid import is_valid
 from utils import PriorityQueue, manhattan_distance
-
-def expand(state, walls, n, m):
-    x, y = state
-    actions = [
-        ('up', (x, y-1)),
-        ('left', (x-1, y)),
-        ('down', (x, y+1)),
-        ('right', (x+1, y))
-    ]
-    successors = []
-    
-    for action, (next_x, next_y) in actions:
-        if is_valid(next_x, next_y, walls, n, m):
-            successors.append((action, (next_x, next_y)))
-    
-    return successors
 
 def dfs_trace(
     start: Tuple[int,int],
@@ -205,7 +189,7 @@ def bi_directional_trace(
     start: Tuple[int,int],
     goals: List[Tuple[int,int]],
     walls: List[Tuple[int,int,int,int]],
-    n: int,
+    n: int, 
     m: int
 ) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int]:
     # Declare frontier for forward and backward
@@ -307,16 +291,18 @@ def fringe_search_trace(
     goals: List[Tuple[int,int]],
     walls: List[Tuple[int,int,int,int]],
     n: int,
-    m: int
-) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int]:
+    m: int,
+    allow_jumps: bool = False,
+    max_jump: int = 3
+) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int, List[Tuple[int,int]]]:
 
 
     visited_steps: List[Tuple[int,int]] = []
     path_steps: List[Tuple[int,int]] = []
     nodes_created = 1
     found_node = None
-
-    start_h =  min(manhattan_distance(start, goal) for goal in goals)
+    jumps = set()
+    start_h = min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, path_cost=0, heuristic=start_h)
 
     # current, later lists
@@ -336,11 +322,23 @@ def fringe_search_trace(
                 found_node = node
                 break
 
-            for action, next_state in expand(node.state, walls, n, m):
-                new_cost = node.path_cost + 1
+            for action, next_state in expand(node.state, walls, n, m, allow_jumps=allow_jumps, max_jump=max_jump):
+                if "jump_" in action:
+                    jump_n = int(''.join(filter(str.isdigit, action)))
+                    step_cost = 2 ** (jump_n - 1)
+                    r1, c1 = node.state
+                    r2, c2 = next_state
+                    dr = (r2 - r1) // jump_n
+                    dc = (c2 - c1) // jump_n
+                    for i in range(1, jump_n):
+                        jumps.add((r1 + dr * i, c1 + dc * i))
+                else:
+                    step_cost = 1
+
+                new_cost = node.path_cost + step_cost
                 if next_state not in cost_so_far or new_cost < cost_so_far[next_state]:
                     cost_so_far[next_state] = new_cost
-                    h =  min(manhattan_distance(next_state, goal) for goal in goals)
+                    h = min(manhattan_distance(next_state, goal) // max_jump for goal in goals)
                     child = Node(next_state,
                                  parent=node,
                                  action=action,
@@ -359,7 +357,7 @@ def fringe_search_trace(
             break
 
         if not later:
-            return visited_steps, [], nodes_created
+            return visited_steps, [], nodes_created, list(jumps)
 
         threshold = min_f_over
         current = later
@@ -371,4 +369,4 @@ def fringe_search_trace(
     else:
         path_steps = []
 
-    return visited_steps, path_steps, nodes_created
+    return visited_steps, path_steps, nodes_created, list(jumps)

@@ -1,4 +1,3 @@
-// components/Grid.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -125,6 +124,7 @@ export function Grid({
             onMouseDown={() => handleDown(tile.row, tile.col)}
             onMouseUp={handleUp}
             onMouseEnter={() => handleEnter(tile.row, tile.col)}
+            isJump={tile.isJump}
           />
         ))}
       </div>

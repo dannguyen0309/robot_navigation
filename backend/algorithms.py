@@ -1,9 +1,9 @@
 from collections import deque
 from node import Node
-from grid import is_valid
+from grid import is_valid, is_wall
 from utils import PriorityQueue, manhattan_distance
 
-def expand(state, walls, n, m):
+def expand(state, walls, n, m, allow_jumps=False, max_jump=3):
     x, y = state
     actions = [
         ('up', (x, y-1)),
@@ -16,6 +16,25 @@ def expand(state, walls, n, m):
     for action, (next_x, next_y) in actions:
         if is_valid(next_x, next_y, walls, n, m):
             successors.append((action, (next_x, next_y)))
+
+        # Jump moves
+    if allow_jumps:
+        for action, (next_x, next_y) in actions:
+            dx = next_x - x
+            dy = next_y - y
+            for j in range(2, max_jump + 1):
+                blocked = False
+                for step in range(1, j):
+                    xi = x + dx * step
+                    yi = y + dy * step
+                    if not is_wall(xi, yi, walls):
+                        blocked = True
+                        break
+                jump_x = x + dx * j
+                jump_y = y + dy * j
+                if not blocked and is_valid(jump_x, jump_y, walls, n, m):
+                    jump_action = f"jump_{action}{j}"
+                    successors.append((jump_action, (jump_x, jump_y)))
     
     return successors
 
@@ -252,8 +271,12 @@ def fringe_search(start, goals, walls, n, m):
             if node.state in goals:
                 return node, nodes_created
 
-            for action, next_node in expand(node.state, walls, n, m):
-                step_cost = 1  
+            for action, next_node in expand(node.state, walls, n, m, allow_jumps=True, max_jump=3):
+                if "jump_" in action:
+                    n_jump = int(''.join(filter(str.isdigit, action)))  
+                    step_cost = 2 ** (n_jump - 1)
+                else:
+                    step_cost = 1
                 new_cost = node.path_cost + step_cost
                 h = min(manhattan_distance(next_node, goal) for goal in goals)
                 f = new_cost + h

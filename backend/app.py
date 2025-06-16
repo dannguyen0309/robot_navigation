@@ -1,8 +1,8 @@
 import os
 import random
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 
 from grid import parse_grid_from_text
@@ -41,7 +41,7 @@ class SolveRequest(BaseModel):
     algorithm: str
 
 class SolveResponse(BaseModel):
-    visited: List[List[Tuple[int, int]]] 
+    visited: List[List[Tuple[int, int]]]
     path: List[List[Tuple[int, int]]]
     nodes_created: List[int]
     n: int
@@ -49,6 +49,7 @@ class SolveResponse(BaseModel):
     start: Tuple[int, int]
     goals: List[Tuple[int, int]]
     walls: List[Tuple[int, int, int, int]]
+    jumps: List[List[Tuple[int, int]]] = []
 
 # --------------------------------------------------------------------------
 @app.post("/parse", response_model=ParseResponse)
@@ -72,6 +73,7 @@ async def solve (request: SolveRequest):
     all_paths = []
     all_visited = []
     all_nodes_created = []
+    all_jumps = []
     current_start = start
     remaining_goals = goals.copy()
 
@@ -79,26 +81,32 @@ async def solve (request: SolveRequest):
         current_goal = remaining_goals[0]
         if algo == "dfs":
             visited, path, nodes_created = dfs_trace(current_start, [current_goal], walls, n, m)
+            jumps = []
         elif algo == "bfs":
             visited, path, nodes_created = bfs_trace(current_start, [current_goal], walls, n, m)
+            jumps = []
         elif algo == "as":
             visited, path, nodes_created = a_star_trace(current_start, [current_goal], walls, n, m)
+            jumps = []
         elif algo == "gbfs":
             visited, path, nodes_created = greedy_best_first_search_trace(current_start, [current_goal], walls, n, m)
+            jumps = []
         elif algo == "bd": # Bi-directional (BD)
             visited, path, nodes_created = bi_directional_trace(current_start, [current_goal], walls, n, m)
+            jumps = []
         elif algo == "fs": # Fringe Search (FS)
-            visited, path, nodes_created = fringe_search_trace(current_start, [current_goal], walls, n, m)       
+            visited, path, nodes_created, jumps = fringe_search_trace(current_start, [current_goal], walls, n, m, allow_jumps=True)
         else:
             raise HTTPException (status_code=400, detail=f"Unknown algorithm: {request.algorithm}")
         all_paths.append(path)
         all_visited.append(visited)
         all_nodes_created.append(nodes_created)
+        all_jumps.append(jumps)
         # Update start and remove reached goal
         current_start = current_goal
         remaining_goals = [g for g in remaining_goals if g != current_start]
 
-    return SolveResponse(visited = all_visited, path = all_paths, nodes_created = all_nodes_created, n = n, m = m, start = start, goals = goals, walls = walls)
+    return SolveResponse(visited = all_visited, path = all_paths, nodes_created = all_nodes_created, n = n, m = m, start = start, goals = goals, walls = walls, jumps = all_jumps)
 
 # ---------------- RANDOM TEXT FILE ------------------------------------
 @app.post("/randomize")

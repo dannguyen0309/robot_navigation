@@ -21,6 +21,7 @@ interface TileProps {
   isWall: boolean;
   isTraversed: boolean;
   isPath: boolean;
+  isJump?: boolean;
   onMouseDown: MouseFunction;
   onMouseUp: MouseFunction;
   onMouseEnter: MouseFunction;

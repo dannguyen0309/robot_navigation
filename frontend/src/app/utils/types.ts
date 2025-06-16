@@ -27,6 +27,7 @@ export type TileType = {
   isPath: boolean;
   distance: number;
   parent: TileType | null;
+  isJump?: boolean;
 };
 
 export type GridType = TileType[][];
@@ -45,6 +46,7 @@ export interface SolveResponse {
   start: [number, number];
   goals: [number, number][];
   walls: [number, number, number, number][];
+  jumps: [Array<[number, number]>];
 }
 
 export type ToolType =
