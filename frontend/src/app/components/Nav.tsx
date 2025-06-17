@@ -40,6 +40,7 @@ export function Nav({
   setRanking,
 }: NavProps & { currentPathIndex: number }) {
   //  INITALIZE
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
   const { startTile, endTile, setStartTile, setEndTile } = useTile();
   const {
     maze,
@@ -186,7 +187,7 @@ export function Nav({
     setSegmentPathLength([]);
     setCurrentPathIndex(0);
 
-    const res = await fetch("/api/solve", {
+    const res = await fetch(`${baseURL}/solve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text, algorithm: algoMap[algorithm] }),
@@ -298,7 +299,7 @@ export function Nav({
     setUploadedText(txt);
     setMaze("NONE");
 
-    const res = await fetch("/api/parse", {
+    const res = await fetch(`${baseURL}/parse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text: txt }),
@@ -359,7 +360,7 @@ export function Nav({
     setRanking([]); // Reset Ranking Board
 
     // FETCH RANDOM GRID TEXT FROM BACKEND
-    const res = await fetch("/api/randomize", {
+    const res = await fetch(`${baseURL}/randomize`, {
       method: "POST",
     });
     if (!res.ok) {
@@ -370,7 +371,7 @@ export function Nav({
     const { grid_text } = await res.json();
 
     // PARSE GRID
-    const parseRes = await fetch("/api/parse", {
+    const parseRes = await fetch(`${baseURL}/parse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text }),

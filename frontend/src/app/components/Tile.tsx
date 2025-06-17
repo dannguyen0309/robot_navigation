@@ -55,7 +55,7 @@ export function Tile({
       className={twMerge(
         style,
         // Extra small for iPhone/mobile, scale up for larger screens
-        "relative flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-8 lg:h-8 transition-colors min-w-0 min-h-0",
+        "relative flex items-center justify-center w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-7 lg:h-7 transition-colors min-w-0 min-h-0",
         row === MAX_ROWS - 1 && "border-b",
         col === 0 && "border-l"
       )}

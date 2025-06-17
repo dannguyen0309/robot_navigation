@@ -17,9 +17,14 @@ from algorithms_for_app import (
 
 app = FastAPI(title = "Robot Navigation API")
 
+origins = [
+    "http://localhost:3000",  # React app running locally
+    "https://robot-navigation.onrender.com",  # Replace with your production domain
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

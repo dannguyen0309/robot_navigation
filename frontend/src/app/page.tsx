@@ -123,14 +123,14 @@ export default function Page() {
               <main className="flex-1 flex flex-col items-center justify-center overflow-auto p-2 sm:p-6">
                 <div className="w-full max-w-5xl flex flex-col xl:flex-row items-center xl:items-start gap-4">
                   {/* Ranking Board above grid on small devices, right on >=1250px */}
-                  <div className="w-full max-w-xs xl:max-w-xs xl:w-64 xl:pb-15 sm:p-15 order-1 xl:order-2 flex-shrink-0 xl:ml-20">
+                  <div className="w-full max-w-md xl:max-w-xs xl:w-64 xl:pb-15 sm:p-10 order-1 xl:order-2 flex-shrink-0 xl:ml-5 xl:mr-5">
                     <RankingBoard ranking={ranking} />
                   </div>
                   {/* Grid section */}
                   <div className="w-full flex flex-col items-center min-w-0 order-2 xl:order-1">
                     <div
                       ref={gridContainerRef}
-                      className="w-full h-full max-h-[60vh] sm:max-h-[70vh] md:max-h-[75vh] lg:max-h-[80vh] aspect-square flex items-center justify-center bg-transparent"
+                      className="w-auto h-auto max-h-[60vh] sm:max-h-[70vh] md:max-h-[75vh] lg:max-h-[80vh] aspect-square flex items-center justify-center bg-transparent"
                       style={{
                         maxWidth: isWide ? "calc(100vw - 400px)" : "100vw",
                         maxHeight: isWide
