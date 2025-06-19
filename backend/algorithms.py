@@ -251,19 +251,18 @@ def _stitch_paths(fwd_meet_node, bwd_meet_node):
     # Step 4: Return the final stitched node
     return current_stitched_node
 # ----------------------- CUSTOM 2 - INFORMED SEARCH - FRINGE SEARCH ---------------------
-def fringe_search(start, goals, walls, n, m):
+def fringe_search(start, goals, walls, n, m, weight=1.2, threshold_delta=0.0):
     start_h = min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, path_cost=0, heuristic=start_h)
 
     # Initialize
     current = [start_node]
     later = []
-    threshold = start_node.path_cost + start_node.heuristic
+    threshold = start_node.path_cost + weight * start_node.heuristic
     nodes_created = 1
     cost_so_far = {start: 0}
-    explored_states_list = []
+    explored_states_list = [start_node]
 
-    explored_states_list.append(start_node)
     while current:
         min_f_exceeding_threshold = float('inf')
 
@@ -277,32 +276,34 @@ def fringe_search(start, goals, walls, n, m):
                     step_cost = 2 ** (n_jump - 1)
                 else:
                     step_cost = 1
+
                 new_cost = node.path_cost + step_cost
+
+                # Strict cost check to avoid re-expansion
+                if next_node in cost_so_far and new_cost >= cost_so_far[next_node]:
+                    continue
+
                 h = min(manhattan_distance(next_node, goal) for goal in goals)
-                f = new_cost + h
+                f = new_cost + weight * h
 
-                if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
-                    cost_so_far[next_node] = new_cost
-                    child_node = Node(next_node, 
-                                      parent=node, 
-                                      action=action,
-                                      path_cost=new_cost, 
-                                      heuristic=h)
-                    nodes_created += 1
+                cost_so_far[next_node] = new_cost
+                child_node = Node(next_node, 
+                                  parent=node, 
+                                  action=action,
+                                  path_cost=new_cost, 
+                                  heuristic=h)
+                nodes_created += 1
 
-                    if f <= threshold:
-                        later.append(child_node)
-                    else:
-                        min_f_exceeding_threshold = min(min_f_exceeding_threshold, f)
-                        later.append(child_node)
+                if f <= threshold:
+                    later.append(child_node)
+                else:
+                    min_f_exceeding_threshold = min(min_f_exceeding_threshold, f)
 
         if not later:
             return None, nodes_created
 
-        threshold = min_f_exceeding_threshold
-        current = later
+        threshold = min_f_exceeding_threshold + threshold_delta
+        current = sorted(later, key=lambda n: n.path_cost + weight * n.heuristic)
         later = []
 
     return None, nodes_created
-
-

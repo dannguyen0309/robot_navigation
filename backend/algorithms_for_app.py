@@ -11,9 +11,6 @@ def dfs_trace(
     n: int,
     m: int,
 ) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int]:
-    """
-    Tái sử dụng logic depth_first_search, nhưng thêm visited_steps và reconstruct path.
-    """
     stack = [Node(start)]
     explored = set()
     visited_steps: List[Tuple[int,int]] = []
@@ -23,7 +20,7 @@ def dfs_trace(
     while stack:
         node = stack.pop()
         explored.add(node.state)
-        visited_steps.append(node.state)   # CHÈN: mỗi lần pop, ghi lại state
+        visited_steps.append(node.state)
 
         if node.state in goals:
             found_node = node
@@ -34,7 +31,6 @@ def dfs_trace(
             if next_state not in explored:
                 successors.append((action, next_state))
 
-        # Push lên stack theo thứ tự đảo ngược để vẫn ưu tiên up→left→down→right
         for action, next_state in reversed(successors):
             child = Node(next_state, parent=node, action=action, path_cost=node.path_cost + 1)
             stack.append(child)
@@ -55,10 +51,6 @@ def bfs_trace(
     n: int,
     m: int,
 ) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int]:
-    """
-    breadth_first_search, nhưng thêm visited_steps và reconstruct path.
-    Trả về: (visited_steps, path_steps, nodes_created)
-    """
     queue = deque([Node(start)])
     explored = set()
     visited_steps: List[Tuple[int,int]] = []
@@ -142,19 +134,15 @@ def a_star_trace(
     n: int,
     m: int,
 ) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int]:
-    """
-    Tái sử dụng logic a_star, nhưng thêm visited_steps và reconstruct path.
-    """
+
     visited_steps: List[Tuple[int,int]] = []
     path_steps: List[Tuple[int,int]] = []
     nodes_created = 1
     found_node = None
 
-    # Khởi tạo start_node với heuristic
     start_h =  min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, heuristic=start_h)
 
-    # frontier dùng PriorityQueue (order='min', f=lambda node: node.path_cost + node.heuristic)
     frontier = PriorityQueue(order='min', f=lambda node: node.path_cost + node.heuristic)
     frontier.append(start_node)
 
@@ -287,30 +275,30 @@ def bi_directional_trace(
 
 # ---------------- CUSTOM 1 - INFORMED SEARCH - Fringe Search (trace) ----------------
 def fringe_search_trace(
-    start: Tuple[int,int],
-    goals: List[Tuple[int,int]],
-    walls: List[Tuple[int,int,int,int]],
+    start: Tuple[int, int],
+    goals: List[Tuple[int, int]],
+    walls: List[Tuple[int, int, int, int]],
     n: int,
     m: int,
     allow_jumps: bool = False,
-    max_jump: int = 3
-) -> Tuple[List[Tuple[int,int]], List[Tuple[int,int]], int, List[Tuple[int,int]]]:
+    max_jump: int = 3,
+    weight: float = 1.2,
+    threshold_delta: float = 0.0
+) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]], int, List[Tuple[int, int]]]:
 
-
-    visited_steps: List[Tuple[int,int]] = []
-    path_steps: List[Tuple[int,int]] = []
-    nodes_created = 1
-    found_node = None
+    visited_steps: List[Tuple[int, int]] = []
+    path_steps: List[Tuple[int, int]] = []
     jumps = set()
+    nodes_created = 1
+
     start_h = min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, path_cost=0, heuristic=start_h)
 
-    # current, later lists
     current: List[Node] = [start_node]
     later: List[Node] = []
-    threshold = start_node.path_cost + start_node.heuristic
+    threshold = start_node.path_cost + weight * start_node.heuristic
 
-    cost_so_far: Dict[Tuple[int,int], int] = {start: 0}
+    cost_so_far: Dict[Tuple[int, int], int] = {start: 0}
 
     while current:
         min_f_over = float('inf')
@@ -319,13 +307,15 @@ def fringe_search_trace(
             visited_steps.append(node.state)
 
             if node.state in goals:
-                found_node = node
-                break
+                path_steps = [n.state for n in node.path()]
+                return visited_steps, path_steps, nodes_created, list(jumps)
 
             for action, next_state in expand(node.state, walls, n, m, allow_jumps=allow_jumps, max_jump=max_jump):
                 if "jump_" in action:
                     jump_n = int(''.join(filter(str.isdigit, action)))
                     step_cost = 2 ** (jump_n - 1)
+
+                    # Log jumped-over cells
                     r1, c1 = node.state
                     r2, c2 = next_state
                     dr = (r2 - r1) // jump_n
@@ -336,37 +326,33 @@ def fringe_search_trace(
                     step_cost = 1
 
                 new_cost = node.path_cost + step_cost
-                if next_state not in cost_so_far or new_cost < cost_so_far[next_state]:
-                    cost_so_far[next_state] = new_cost
-                    h = min(manhattan_distance(next_state, goal) // max_jump for goal in goals)
-                    child = Node(next_state,
-                                 parent=node,
-                                 action=action,
-                                 path_cost=new_cost,
-                                 heuristic=h)
-                    nodes_created += 1
-                    f_val = new_cost + h
-                    if f_val <= threshold:
-                        later.append(child)
-                    else:
-                        if f_val < min_f_over:
-                            min_f_over = f_val
-                        later.append(child)
+                if next_state in cost_so_far and new_cost >= cost_so_far[next_state]:
+                    continue
 
-        if found_node is not None:
-            break
+                cost_so_far[next_state] = new_cost
+                h = min(manhattan_distance(next_state, goal) for goal in goals)
+                f_val = new_cost + weight * h
+
+                child = Node(
+                    next_state,
+                    parent=node,
+                    action=action,
+                    path_cost=new_cost,
+                    heuristic=h
+                )
+                nodes_created += 1
+
+                if f_val <= threshold:
+                    later.append(child)
+                else:
+                    min_f_over = min(min_f_over, f_val)
+                    later.append(child)
 
         if not later:
             return visited_steps, [], nodes_created, list(jumps)
 
-        threshold = min_f_over
-        current = later
+        threshold = min_f_over + threshold_delta
+        current = sorted(later, key=lambda n: n.path_cost + weight * n.heuristic)
         later = []
-
-    if found_node:
-        path_nodes = found_node.path()
-        path_steps = [nd.state for nd in path_nodes]
-    else:
-        path_steps = []
 
     return visited_steps, path_steps, nodes_created, list(jumps)
