@@ -94,6 +94,7 @@ export function Nav({
     setIsGraphVisualized(false);
     setNodesCreated(0);
     setPathLength(0);
+    setRanking([]); // Reset Ranking Board when maze changes
 
     const base = createGrid(START_TILE_CONFIGURATION, END_TILE_CONFIGURATION);
     setGrid(base);
@@ -345,6 +346,7 @@ export function Nav({
     setIsGraphVisualized(false);
     setNodesCreated(0);
     setPathLength(0);
+    setRanking([]); // Reset Ranking Board when uploading new file
     e.target.value = "";
   };
 

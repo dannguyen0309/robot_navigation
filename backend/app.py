@@ -19,7 +19,7 @@ app = FastAPI(title = "Robot Navigation API")
 
 origins = [
     "http://localhost:3000",  # React app running locally
-    "https://robot-navigation-one.vercel.app",  # Replace with your production domain
+    "https://robot-navigation.onrender.com",
 ]
 
 app.add_middleware(

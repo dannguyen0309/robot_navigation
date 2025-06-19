@@ -25,6 +25,7 @@ export const UploadFileBox: React.FC<UploadFileBoxProps> = ({
   setPathLength,
 }) => {
   const [error, setError] = useState<string | null>(null);
+  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,7 +41,7 @@ export const UploadFileBox: React.FC<UploadFileBoxProps> = ({
     setMaze("NONE");
     setError(null);
 
-    const res = await fetch("http://localhost:8000/parse", {
+    const res = await fetch(`${baseURL}/parse`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grid_text: txt }),
