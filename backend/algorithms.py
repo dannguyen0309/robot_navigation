@@ -279,31 +279,32 @@ def fringe_search(start, goals, walls, n, m, weight=1.2, threshold_delta=0.0):
 
                 new_cost = node.path_cost + step_cost
 
-                # Strict cost check to avoid re-expansion
-                if next_node in cost_so_far and new_cost >= cost_so_far[next_node]:
-                    continue
+                # Only expand if new_cost is better than any previous cost
+                if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
+                    cost_so_far[next_node] = new_cost
+                    h = min(manhattan_distance(next_node, goal) for goal in goals)
+                    f = new_cost + weight * h
+                    child_node = Node(next_node, 
+                                      parent=node, 
+                                      action=action,
+                                      path_cost=new_cost, 
+                                      heuristic=h)
+                    nodes_created += 1
 
-                h = min(manhattan_distance(next_node, goal) for goal in goals)
-                f = new_cost + weight * h
-
-                cost_so_far[next_node] = new_cost
-                child_node = Node(next_node, 
-                                  parent=node, 
-                                  action=action,
-                                  path_cost=new_cost, 
-                                  heuristic=h)
-                nodes_created += 1
-
-                if f <= threshold:
-                    later.append(child_node)
-                else:
-                    min_f_exceeding_threshold = min(min_f_exceeding_threshold, f)
+                    if f <= threshold:
+                        later.append(child_node)
+                    else:
+                        min_f_exceeding_threshold = min(min_f_exceeding_threshold, f)
 
         if not later:
             return None, nodes_created
 
-        threshold = min_f_exceeding_threshold + threshold_delta
-        current = sorted(later, key=lambda n: n.path_cost + weight * n.heuristic)
+        # Prune later: keep only the best node per state
+        next_later = {}
+        for node in later:
+            if node.state not in next_later or node.path_cost < next_later[node.state].path_cost:
+                next_later[node.state] = node
+        current = sorted(next_later.values(), key=lambda n: n.path_cost + weight * n.heuristic)
         later = []
 
     return None, nodes_created

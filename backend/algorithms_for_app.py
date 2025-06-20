@@ -291,13 +291,13 @@ def fringe_search_trace(
     jumps = set()
     nodes_created = 1
 
+    # Use manhattan_distance for heuristic
     start_h = min(manhattan_distance(start, goal) for goal in goals)
     start_node = Node(start, path_cost=0, heuristic=start_h)
 
     current: List[Node] = [start_node]
     later: List[Node] = []
     threshold = start_node.path_cost + weight * start_node.heuristic
-
     cost_so_far: Dict[Tuple[int, int], int] = {start: 0}
 
     while current:
@@ -314,45 +314,34 @@ def fringe_search_trace(
                 if "jump_" in action:
                     jump_n = int(''.join(filter(str.isdigit, action)))
                     step_cost = 2 ** (jump_n - 1)
-
-                    # Log jumped-over cells
-                    r1, c1 = node.state
-                    r2, c2 = next_state
-                    dr = (r2 - r1) // jump_n
-                    dc = (c2 - c1) // jump_n
-                    for i in range(1, jump_n):
-                        jumps.add((r1 + dr * i, c1 + dc * i))
                 else:
                     step_cost = 1
 
                 new_cost = node.path_cost + step_cost
-                if next_state in cost_so_far and new_cost >= cost_so_far[next_state]:
-                    continue
-
-                cost_so_far[next_state] = new_cost
-                h = min(manhattan_distance(next_state, goal) for goal in goals)
-                f_val = new_cost + weight * h
-
-                child = Node(
-                    next_state,
-                    parent=node,
-                    action=action,
-                    path_cost=new_cost,
-                    heuristic=h
-                )
-                nodes_created += 1
-
-                if f_val <= threshold:
-                    later.append(child)
-                else:
-                    min_f_over = min(min_f_over, f_val)
-                    later.append(child)
-
+                if next_state not in cost_so_far or new_cost < cost_so_far[next_state]:
+                    cost_so_far[next_state] = new_cost
+                    h = min(manhattan_distance(next_state, goal) for goal in goals)
+                    f_val = new_cost + weight * h
+                    child = Node(
+                        next_state,
+                        parent=node,
+                        action=action,
+                        path_cost=new_cost,
+                        heuristic=h
+                    )
+                    nodes_created += 1
+                    if f_val <= threshold:
+                        later.append(child)
+                    else:
+                        min_f_over = min(min_f_over, f_val)
         if not later:
             return visited_steps, [], nodes_created, list(jumps)
-
-        threshold = min_f_over + threshold_delta
-        current = sorted(later, key=lambda n: n.path_cost + weight * n.heuristic)
+        # Prune later: keep only the best node per state
+        next_later = {}
+        for node in later:
+            if node.state not in next_later or node.path_cost < next_later[node.state].path_cost:
+                next_later[node.state] = node
+        current = sorted(next_later.values(), key=lambda n: n.path_cost + weight * n.heuristic)
         later = []
-
+        threshold = min_f_over + threshold_delta
     return visited_steps, path_steps, nodes_created, list(jumps)
