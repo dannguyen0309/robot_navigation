@@ -261,7 +261,6 @@ def fringe_search(start, goals, walls, n, m, weight=1.2, threshold_delta=0.0):
     threshold = start_node.path_cost + weight * start_node.heuristic
     nodes_created = 1
     cost_so_far = {start: 0}
-    explored_states_list = [start_node]
 
     while current:
         min_f_exceeding_threshold = float('inf')

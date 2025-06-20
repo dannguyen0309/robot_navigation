@@ -3,92 +3,14 @@ import { MazeType, TileType } from "../utils/types";
 
 interface UploadFileBoxProps {
   isDisabled: boolean;
-  setMaze: (maze: MazeType) => void;
-  setUploadedText: (txt: string | null) => void;
-  setGrid: (grid: TileType[][]) => void;
-  setStartTile: (tile: TileType) => void;
-  setEndTile: (tile: TileType) => void;
-  setIsGraphVisualized: (v: boolean) => void;
-  setNodesCreated: (n: number) => void;
-  setPathLength: (n: number | string) => void;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const UploadFileBox: React.FC<UploadFileBoxProps> = ({
   isDisabled,
-  setMaze,
-  setUploadedText,
-  setGrid,
-  setStartTile,
-  setEndTile,
-  setIsGraphVisualized,
-  setNodesCreated,
-  setPathLength,
+  onFileChange,
 }) => {
   const [error, setError] = useState<string | null>(null);
-  const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Check file type (should be text/plain)
-    if (file.type !== "text/plain" && !file.name.endsWith(".txt")) {
-      setError("Please upload a valid .txt file.");
-      e.target.value = "";
-      return;
-    }
-    const txt = await file.text();
-    setUploadedText(txt);
-    setMaze("NONE");
-    setError(null);
-
-    const res = await fetch(`${baseURL}/parse`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ grid_text: txt }),
-    });
-    if (!res.ok) {
-      setError("Error! Task failed successfully.");
-      e.target.value = "";
-      return;
-    }
-    const { n, m, start, goals, walls } = (await res.json()) as {
-      n: number;
-      m: number;
-      start: [number, number];
-      goals: [number, number][];
-      walls: [number, number, number, number][];
-    };
-
-    // rebuild
-    const newGrid: TileType[][] = Array.from({ length: n }, (_, r) =>
-      Array.from({ length: m }, (_, c) => ({
-        row: r,
-        col: c,
-        isStart: false,
-        isEnd: false,
-        isWall: false,
-        isTraversed: false,
-        isPath: false,
-        distance: Infinity,
-        parent: null,
-      }))
-    );
-    newGrid[start[1]][start[0]].isStart = true;
-    setStartTile(newGrid[start[1]][start[0]]);
-    goals.forEach(([gx, gy]: [number, number]) => {
-      newGrid[gy][gx].isEnd = true;
-      setEndTile(newGrid[gy][gx]);
-    });
-    walls.forEach(([wx, wy, w, h]: [number, number, number, number]) => {
-      for (let dy = 0; dy < h; dy++)
-        for (let dx = 0; dx < w; dx++) newGrid[wy + dy][wx + dx].isWall = true;
-    });
-    setGrid(newGrid);
-    setIsGraphVisualized(false);
-    setNodesCreated(0);
-    setPathLength(0);
-    e.target.value = "";
-  };
 
   return (
     <div className="w-full">
@@ -137,7 +59,7 @@ export const UploadFileBox: React.FC<UploadFileBoxProps> = ({
           type="file"
           accept=".txt"
           className="hidden"
-          onChange={handleFileChange}
+          onChange={onFileChange}
           disabled={isDisabled}
         />
       </label>

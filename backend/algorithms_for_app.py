@@ -283,10 +283,10 @@ def fringe_search_trace(
     allow_jumps: bool = False,
     max_jump: int = 3,
     weight: float = 1.2,
-    threshold_delta: float = 0.0
 ) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]], int, List[Tuple[int, int]]]:
 
-    visited_steps: List[Tuple[int, int]] = []
+    visited_steps: List[Tuple[int, int]] = [start]
+    visited_set = set(start)
     path_steps: List[Tuple[int, int]] = []
     jumps = set()
     nodes_created = 1
@@ -302,21 +302,19 @@ def fringe_search_trace(
 
     while current:
         min_f_over = float('inf')
-
         for node in current:
-            visited_steps.append(node.state)
-
+            if node.state not in visited_set:
+                visited_steps.append(node.state)
+                visited_set.add(node.state)
             if node.state in goals:
                 path_steps = [n.state for n in node.path()]
                 return visited_steps, path_steps, nodes_created, list(jumps)
-
             for action, next_state in expand(node.state, walls, n, m, allow_jumps=allow_jumps, max_jump=max_jump):
                 if "jump_" in action:
                     jump_n = int(''.join(filter(str.isdigit, action)))
                     step_cost = 2 ** (jump_n - 1)
                 else:
                     step_cost = 1
-
                 new_cost = node.path_cost + step_cost
                 if next_state not in cost_so_far or new_cost < cost_so_far[next_state]:
                     cost_so_far[next_state] = new_cost
@@ -343,5 +341,4 @@ def fringe_search_trace(
                 next_later[node.state] = node
         current = sorted(next_later.values(), key=lambda n: n.path_cost + weight * n.heuristic)
         later = []
-        threshold = min_f_over + threshold_delta
     return visited_steps, path_steps, nodes_created, list(jumps)

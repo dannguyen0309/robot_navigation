@@ -85,6 +85,13 @@ export function Nav({
     setTool("ADD_WALL");
     setRanking([]); // Reset Ranking Board
     setGoalPositions([]); // Reset goal positions
+    setAllVisitedLocal([]); // Reset allVisited pagination data
+    setAllPathsLocal([]); // Reset allPaths pagination data
+    setAllVisited([]); // Reset parent allVisited
+    setAllPaths([]); // Reset parent allPaths
+    setSegmentNodesCreated([]); // Reset per-segment stats
+    setSegmentPathLength([]); // Reset per-segment stats
+    setCurrentPathIndex(0); // Reset pagination
   };
 
   // 2) Maze carving
@@ -95,6 +102,13 @@ export function Nav({
     setNodesCreated(0);
     setPathLength(0);
     setRanking([]); // Reset Ranking Board when maze changes
+    setAllVisitedLocal([]); // Reset allVisited pagination data
+    setAllPathsLocal([]); // Reset allPaths pagination data
+    setAllVisited([]); // Reset parent allVisited
+    setAllPaths([]); // Reset parent allPaths
+    setSegmentNodesCreated([]); // Reset per-segment stats
+    setSegmentPathLength([]); // Reset per-segment stats
+    setCurrentPathIndex(0); // Reset pagination
 
     const base = createGrid(START_TILE_CONFIGURATION, END_TILE_CONFIGURATION);
     setGrid(base);
@@ -346,7 +360,14 @@ export function Nav({
     setIsGraphVisualized(false);
     setNodesCreated(0);
     setPathLength(0);
-    setRanking([]); // Reset Ranking Board when uploading new file
+    setRanking([]); // Reset Ranking Board when maze changes
+    setAllVisitedLocal([]); // Reset allVisited pagination data
+    setAllPathsLocal([]); // Reset allPaths pagination data
+    setAllVisited([]); // Reset parent allVisited
+    setAllPaths([]); // Reset parent allPaths
+    setSegmentNodesCreated([]); // Reset per-segment stats
+    setSegmentPathLength([]); // Reset per-segment stats
+    setCurrentPathIndex(0); // Reset pagination
     e.target.value = "";
   };
 
@@ -360,6 +381,13 @@ export function Nav({
     setMaze("NONE");
     setUploadedText(null);
     setRanking([]); // Reset Ranking Board
+    setAllVisitedLocal([]); // Reset allVisited pagination data
+    setAllPathsLocal([]); // Reset allPaths pagination data
+    setAllVisited([]); // Reset parent allVisited
+    setAllPaths([]); // Reset parent allPaths
+    setSegmentNodesCreated([]); // Reset per-segment stats
+    setSegmentPathLength([]); // Reset per-segment stats
+    setCurrentPathIndex(0); // Reset pagination
 
     // FETCH RANDOM GRID TEXT FROM BACKEND
     const res = await fetch(`${baseURL}/randomize`, {
@@ -594,17 +622,7 @@ export function Nav({
       />
 
       {/* File Upload */}
-      <UploadFileBox
-        isDisabled={isDisabled}
-        setMaze={setMaze}
-        setUploadedText={setUploadedText}
-        setGrid={setGrid}
-        setStartTile={setStartTile}
-        setEndTile={setEndTile}
-        setIsGraphVisualized={setIsGraphVisualized}
-        setNodesCreated={setNodesCreated}
-        setPathLength={setPathLength}
-      />
+      <UploadFileBox isDisabled={isDisabled} onFileChange={handleFileChange} />
 
       {/* Random Grid Button */}
       <RandomizeButton onClick={handleRandomize} isDisabled={isDisabled} />
