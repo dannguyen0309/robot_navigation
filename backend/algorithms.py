@@ -109,6 +109,7 @@ def greedy_best_first_search (start, goals, walls, n, m):
                                   path_cost = node.path_cost + 1,
                                   heuristic = h)
                 frontier.append(child_node)
+                explored.add(next_node)  # Add this line to prevent revisiting
                 nodes_created += 1
     return None, nodes_created
 

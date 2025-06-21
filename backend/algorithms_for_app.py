@@ -119,6 +119,7 @@ def greedy_best_first_search_trace(
                                   path_cost = node.path_cost + 1,
                                   heuristic = h)
                 frontier.append(child_node)
+                explored.add(next_state)
                 nodes_created += 1
     if not found_node:
         return visited_steps, [], nodes_created
