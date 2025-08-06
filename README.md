@@ -73,7 +73,3 @@ python search.py .\test_cases\grid_1.txt astar
 
 This project is licensed under the MIT License.
 Feel free to fork and build upon it!
-
----
-
-Let me know your GitHub repo link if you'd like me to insert it into the clone command (`git clone ...`). I can also help you add algorithm documentation or test case guidelines if needed.
